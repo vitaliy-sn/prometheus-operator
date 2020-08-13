@@ -573,7 +573,7 @@ func makeStatefulSetSpec(p monitoringv1.Prometheus, c *Config, ruleConfigMapName
 		fmt.Sprintf("--config-envsubst-file=%s", path.Join(confOutDir, configEnvsubstFilename)),
 	}
 
-	const localProbe = `if [ -x "$(command -v curl)" ]; then curl %s; elif [ -x "$(command -v wget)" ]; then wget -q -O /dev/null %s; else exit 1; fi`
+	const localProbe = `if [ -x "$(command -v curl)" ]; then curl --connect-timeout %d %s; elif [ -x "$(command -v wget)" ]; then wget -T %d -q -O /dev/null %s; else exit 1; fi`
 
 	var livenessProbeHandler v1.Handler
 	var readinessProbeHandler v1.Handler
@@ -587,7 +587,7 @@ func makeStatefulSetSpec(p monitoringv1.Prometheus, c *Config, ruleConfigMapName
 					Command: []string{
 						"sh",
 						"-c",
-						fmt.Sprintf(localProbe, localHealthyPath, localHealthyPath),
+						fmt.Sprintf(localProbe, probeTimeoutSeconds, localHealthyPath, probeTimeoutSeconds, localHealthyPath),
 					},
 				}
 			} else {
@@ -605,7 +605,7 @@ func makeStatefulSetSpec(p monitoringv1.Prometheus, c *Config, ruleConfigMapName
 					Command: []string{
 						"sh",
 						"-c",
-						fmt.Sprintf(localProbe, localReadyPath, localReadyPath),
+						fmt.Sprintf(localProbe, probeTimeoutSeconds, localReadyPath, probeTimeoutSeconds, localReadyPath),
 					},
 				}
 
